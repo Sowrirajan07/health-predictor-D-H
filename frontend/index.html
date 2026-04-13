@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Aegis_demo</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #000000, #0a0a2a);
+    color: white;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    color: royalblue;
+    font-size: 42px;
+}
+
+.subtitle {
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(65,105,225,0.3);
+}
+
+.card h2 {
+    color: royalblue;
+}
+
+input {
+    width: 90%;
+    margin: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+}
+
+button {
+    padding: 14px 30px;
+    background: royalblue;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #4169e1;
+    transform: scale(1.05);
+}
+
+.result {
+    margin-top: 20px;
+    font-size: 20px;
+    opacity: 0;
+    transition: 0.5s;
+}
+
+.show {
+    opacity: 1;
+}
+
+.loader {
+    display: none;
+    margin-top: 15px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Aegis Demo</h1>
+    <p class="subtitle">AI-Based Health Risk Prediction</p>
+
+    <div class="card">
+        <h2>Diabetes Prediction</h2>
+        <input id="preg" placeholder="Pregnancies">
+        <input id="glucose" placeholder="Glucose">
+        <input id="bp" placeholder="Blood Pressure">
+        <input id="skin" placeholder="Skin Thickness">
+        <input id="insulin" placeholder="Insulin">
+        <input id="bmi" placeholder="BMI">
+        <input id="dpf" placeholder="Diabetes Pedigree">
+        <input id="age_d" placeholder="Age">
+    </div>
+
+    <div class="card">
+        <h2>Heart Disease Prediction</h2>
+        <input id="age" placeholder="Age">
+        <input id="sex" placeholder="Sex (0/1)">
+        <input id="cp" placeholder="Chest Pain Type">
+        <input id="trestbps" placeholder="Blood Pressure">
+        <input id="chol" placeholder="Cholesterol">
+        <input id="fbs" placeholder="Fasting Blood Sugar">
+        <input id="restecg" placeholder="Rest ECG">
+        <input id="thalach" placeholder="Max Heart Rate">
+        <input id="exang" placeholder="Exercise Angina">
+        <input id="oldpeak" placeholder="Oldpeak">
+        <input id="slope" placeholder="Slope">
+        <input id="ca" placeholder="CA">
+        <input id="thal" placeholder="Thal">
+    </div>
+
+    <button onclick="predict()">Predict</button>
+
+    <div class="loader" id="loader">⏳ Processing...</div>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+async function predict() {
+
+    let inputs = document.querySelectorAll("input");
+    for (let i of inputs) {
+        if (i.value === "") {
+            alert("Please fill all fields!");
+            return;
+        }
+    }
+
+    document.getElementById("loader").style.display = "block";
+    document.getElementById("result").classList.remove("show");
+
+    let diabetes = [
+        +preg.value, +glucose.value, +bp.value, +skin.value,
+        +insulin.value, +bmi.value, +dpf.value, +age_d.value
+    ];
+
+    let heart = [
+        +age.value, +sex.value, +cp.value, +trestbps.value,
+        +chol.value, +fbs.value, +restecg.value, +thalach.value,
+        +exang.value, +oldpeak.value, +slope.value, +ca.value, +thal.value
+    ];
+
+    let res = await fetch("http://127.0.0.1:5000/predict", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ diabetes, heart })
+    });
+
+    let data = await res.json();
+
+    let d_prob = (data.diabetes_probability * 100).toFixed(2);
+    let h_prob = (data.heart_probability * 100).toFixed(2);
+
+    let diabetesText = data.diabetes 
+        ? `<span style="color:red">⚠️ High Risk (${d_prob}%)</span>`
+        : `<span style="color:lightgreen">✅ Low Risk (${d_prob}%)</span>`;
+
+    let heartText = data.heart 
+        ? `<span style="color:red">⚠️ High Risk (${h_prob}%)</span>`
+        : `<span style="color:lightgreen">✅ Low Risk (${h_prob}%)</span>`;
+
+    document.getElementById("loader").style.display = "none";
+
+    document.getElementById("result").innerHTML = `
+        <p>Diabetes: ${diabetesText}</p>
+        <p>Heart Disease: ${heartText}</p>
+    `;
+
+    document.getElementById("result").classList.add("show");
+}
+</script>
+
+</body>
+</html>
